@@ -1,7 +1,7 @@
 Run manage.py with parameter "runserver"
 
-The web address is http://127.0.0.1:8000/keys/id for session 1 and 
-http://127.0.0.1:8000/keys/s2 for session 2, you can check the rest in file
+The web address is /keys/id for session 1 and
+/keys/s2 for session 2, you can check the rest in file
 aetna/keys/urls
 
 To get database information go to /keys/db ---> this will print out all data to database.txt file

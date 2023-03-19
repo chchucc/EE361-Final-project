@@ -112,4 +112,4 @@ def Dfeat3(test, profile):
     print(f'TOTAL S is: ', s)
     print(f'C is: ', c)
     print(f'SCORE is: ', str(round(s * 1.0 / 100, 3)))
-    return s * 1.0 / 100      # more like finding the mean of all the scores
+    return s * 1.0 / 100  # more like finding the mean of all the scores

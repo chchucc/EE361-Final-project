@@ -1,32 +1,32 @@
 # -*- coding: utf-8 -*-
 # encoding = utf8
+import datetime
+import random
 import re
 import time
+from datetime import date, datetime as dt
 from math import floor
 
 # from background_task import background
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import F
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.template import loader
 from django.template.loader import get_template
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
+
+from fuzzywuzzy import fuzz
 from twilio.rest import Client
+from keys.database_helper import *
 
-from keys.manhattan import manhattan, parse, parseTest
-
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
-from django.template import loader
+from keys.manhattan import manhattan
+from keys.models import Input
 from keys.models import Keys, Users, Temp_User, Temp_Keys, Temp_Input, Temp_Mouse, Data, RecoveryAttempt, LoginAttempt, \
     Impostors_Keys, Dropdown, Temp_Dropdown, Attacks
-from keys.models import Input
 from keys.models import Mouse
-
-from datetime import date, datetime as dt
-import datetime
-# from passlib.hash import pbkdf2_sha256
-from fuzzywuzzy import fuzz
-from django.core.mail import EmailMultiAlternatives, EmailMessage
-import random
 
 # Global parameters
 REPEAT1 = 5
@@ -116,7 +116,7 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                  i.widgetName == 'userName' and i.genuine == 1 and i.decision == 'granted'])
     p2 = sorted([(i.timestamp, i.key_name, i.release) for i in all_keys if i.release == 0 and
                  (
-                             i.widgetName == 'password' or i.widgetName == 'reTypePwd') and i.genuine == 1 and i.decision == 'granted'])
+                         i.widgetName == 'password' or i.widgetName == 'reTypePwd') and i.genuine == 1 and i.decision == 'granted'])
 
     # Get test samples
     samples = Data.objects.filter(ip=ip_address)
@@ -143,6 +143,7 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                 if distance_score <= loginThreshold:
                     request.session['is_loggedin'] = True
                     request.session['loggedin_user'] = fullname
+                    request.session['loggedin_username'] = username
 
                     # Save data
                     if isTrueUser:
@@ -182,7 +183,7 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                                            score='%.3f' % (distance_score),
                                            threshold=loginThreshold, status=status)
                     attempt.save()
-                    response = redirect('http://127.0.0.1:8000/soteria/landingpage')
+                    response = redirect('/soteria/landingpage')
                     return response
                 else:
                     # TODO: Enable OTP only as second factor if keystrokes fail
@@ -226,7 +227,7 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                     context_mail = {'fn': user.first_name, 'otp2': otp2, 'otp': True}
                     SendCustomEmail([email], context_mail, "Verification Required")
                     context = {'enterOTP': True, 'split': True}
-                    url = 'home2.html'
+                    url = 'home.html'
                     return render(request, url, context)
             else:
                 # Insufficient keystrokes
@@ -272,7 +273,7 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                 context_mail = {'fn': user.first_name, 'otp2': otp2, 'otp': True}
                 SendCustomEmail([email], context_mail, "Verification Required")
                 context = {'enterOTP': True, 'split': True}
-                url = 'home2.html'
+                url = 'home.html'
                 return render(request, url, context)
         else:
             context = {'error': 'ACCESS DENIED.',
@@ -302,8 +303,6 @@ def home(request):
         _return = checkWeeklyTasks(request)
         if isinstance(_return, dict):
             context = _return
-        else:
-            return _return
 
     request.session['action'] = 'login'
 
@@ -341,7 +340,7 @@ def home(request):
                             break
             else:
                 context = {'error': 'Session Expired.', 'showWelcomeMessage': True}
-                url = 'home2.html'
+                url = 'home.html'
                 ip_address = getIP(request)
                 clear(ip_address)
                 clearMouseData(ip_address)
@@ -360,7 +359,7 @@ def home(request):
                         otp) + ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA",
                             phone)
                     context = {'enterOTP': True}
-                    return render(request, 'home2.html', context)
+                    return render(request, 'home.html', context)
                 else:
                     _return1 = useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTrueUser, user)
                     if isinstance(_return1, dict):
@@ -369,14 +368,14 @@ def home(request):
                         return _return1
                 clear(ip_address)
                 clearMouseData(ip_address)
-                url = 'home2.html'
+                url = 'home.html'
                 return render(request, url, context)
 
             else:
                 context = {'error': 'ACCESS DENIED.', 'tasksleft': loginWeeklyTaskLeft}
                 clear(ip_address)
                 clearMouseData(ip_address)
-                url = 'home2.html'
+                url = 'home.html'
                 if isTrueUser:
                     status = "Wrong Credentials (FR)"
                 else:
@@ -388,7 +387,7 @@ def home(request):
         else:
             print('Wrong login credentials.')
             context = {'error': 'ACCESS DENIED.', 'tasksleft': loginWeeklyTaskLeft}
-            url = 'home2.html'
+            url = 'home.html'
             clear(ip_address)
             clearMouseData(ip_address)
             return render(request, url, context)
@@ -406,10 +405,11 @@ def home(request):
                     context = {'error': 'OTP Expired.', 'tasksleft': loginWeeklyTaskLeft}
                     # Delete the tempUser
                     request.session.pop('tempUser', None)
-                    return render(request, 'home2.html', context)
+                    return render(request, 'home.html', context)
                 print('OTP is valid!')
                 request.session['is_loggedin'] = True
                 request.session['loggedin_user'] = user.first_name + ' ' + user.last_name
+                request.session['loggedin_username'] = username
                 print("Building Template")
                 # Save attempt
                 attempt = LoginAttempt(ip=ip_address, claimed_id=attempt_user, timestamp=int(time.time()),
@@ -422,7 +422,8 @@ def home(request):
                 else:
                     lastAttempt = user.login_attempt + 1
                 # Update login template count
-                if fuzz.ratio(user.first_name.lower() + ' ' + user.last_name.lower(), request.session['sessionUserFullname'].lower()) > 80:
+                if fuzz.ratio(user.first_name.lower() + ' ' + user.last_name.lower(),
+                              request.session['sessionUserFullname'].lower()) > 80:
                     # True user
                     Users.objects.filter(memberID=attempt_user).update(login_template=(user.login_template + 1))
                     if user.login_weekly_task_left > 0:
@@ -434,25 +435,25 @@ def home(request):
                     addKeystrokesToProfile('UL', ip_address, attempt_user, 1, 'granted', lastAttempt)
                     addMouseToProfile('UL', ip_address, attempt_user, 1, 'granted', lastAttempt)
 
-                response = redirect('http://127.0.0.1:8000/soteria/landingpage')
+                response = redirect('/soteria/landingpage')
                 return response
             elif otp is None:
                 clear(ip_address)
                 clearMouseData(ip_address)
                 request.session.pop('tempUser', None)
-                return render(request, 'home2.html', context)
+                return render(request, 'home.html', context)
             else:
                 clear(ip_address)
                 clearMouseData(ip_address)
                 context = {'enterOTP': True, 'error': 'WRONG OTP, Please retry.'}
-                return render(request, 'home2.html', context)
+                return render(request, 'home.html', context)
         except (MultiValueDictKeyError, KeyError):
             print("Welcome")
             clear(ip_address)
             clearMouseData(ip_address)
             # Delete the tempUser
             request.session.pop('tempUser', None)
-            return render(request, 'home2.html', context)
+            return render(request, 'home.html', context)
 
 
 # @background(schedule=0)
@@ -485,10 +486,10 @@ def addMouseToProfile(iteration, ip_address, attempt_user, genuine, decision, lo
 def sendSMS(message, phone):
     if '+' not in str(phone):
         phone = '+1' + str(phone)
-    account_sid = '*******************************'
-    auth_token = '*******************************'
+    account_sid = settings.TWILIO_ACCOUNT_SID
+    auth_token = settings.TWILIO_AUTH_TOKEN
     client = Client(account_sid, auth_token)
-    client.messages.create(to=phone, from_='+13233363926', body=message)
+    client.messages.create(to=phone, from_=settings.TWILIO_PHONE_NUMBER, body=message)
 
 
 def index(request):
@@ -504,10 +505,10 @@ def index(request):
 def listen(request):
     m = 'RFA'
     username = request.session.get('memberID', '')
-    if username == '': exit()
-    iterat = m[request.session.get('phase', 0)] + str(request.session['counter'] + 1)
-    e = eval(request.path.split('n/')[-1])
-    saveKeys(username, e, iterat)
+    if username != '':
+        iterat = m[request.session.get('phase', 0)] + str(request.session['counter'] + 1)
+        e = eval(request.path.split('n/')[-1])
+        saveKeys(username, e, iterat)
     return HttpResponse(request)
 
 
@@ -521,10 +522,10 @@ def saveKeys(username, e, iterat):
 # For Enrollment
 def temp_keys_listen(request):
     username = request.session.get('memberID', '')
-    if username == '': exit()
-    iterat = 'R' + str(request.session['counter'] + 1)
-    e = eval(request.path.split('n/')[-1])
-    saveTempKeys(username, e, iterat)
+    if username != '':
+        iterat = 'R' + str(request.session['counter'] + 1)
+        e = eval(request.path.split('n/')[-1])
+        saveTempKeys(username, e, iterat)
     return HttpResponse(request)
 
 
@@ -538,19 +539,19 @@ def saveTempKeys(username, e, iterat):
 # For Account Recovery
 def dropdwnln(request):
     ip_address = request.session.get('ip_address', '')
-    if ip_address == '': exit()
-    e = eval(request.path.split('dropdwnln')[-1])
-    saveDropdown(ip_address, e, '')
+    if ip_address != '':
+        e = eval(request.path.split('dropdwnln')[-1])
+        saveDropdown(ip_address, e, '')
     return HttpResponse(request)
 
 
 # For Enrollment
 def dropdwnlisten2(request):
     ip_address = request.session.get('ip_address', '')
-    if ip_address == '': exit()
-    e = eval(request.path.split('dropdwnlisten2')[-1])
-    iterat = 'R' + str(request.session['counter'] + 1)
-    saveDropdown(ip_address, e, iterat)
+    if ip_address != '':
+        e = eval(request.path.split('dropdwnlisten2')[-1])
+        iterat = 'R' + str(request.session['counter'] + 1)
+        saveDropdown(ip_address, e, iterat)
     return HttpResponse(request)
 
 
@@ -565,8 +566,9 @@ def saveDropdown(ip_address, e, iterat):
 def mousee(request):
     data = eval(request.path.split('mousee')[-1])
     ip_address = request.session.get('ip_address', '')
-    if ip_address == '': exit()
-    saveMouse(ip_address, data, '')
+    print(ip_address)
+    if ip_address != '':
+        saveMouse(ip_address, data, '')
     return HttpResponse(request)
 
 
@@ -574,9 +576,9 @@ def mousee(request):
 def mousee2(request):
     data = eval(request.path.split('mousee2')[-1])
     ip_address = request.session.get('ip_address', '')
-    if ip_address == '': exit()
-    iterat = 'R' + str(request.session['counter'] + 1)
-    saveMouse(ip_address, data, iterat)
+    if ip_address != '':
+        iterat = 'R' + str(request.session['counter'] + 1)
+        saveMouse(ip_address, data, iterat)
     return HttpResponse(request)
 
 
@@ -593,15 +595,16 @@ def saveMouse(ip_address, data, iterat):
 
 def listn2(request):
     ip_address = request.session.get('ip_address', '')
-    if ip_address == '': exit()
-    if request.session['action'] == 'account_recovery':
-        iterat = 'AR'  # AR stands for Account Recovery keystrokes
-        e = eval(request.path.split('2/')[-1])
-        saveTempData2(ip_address, e, iterat)  # Store Asynchronously
-    else:
-        iterat = 'UL'  # UL stands for User Login keystrokes
-        e = eval(request.path.split('2/')[-1])
-        saveTempData(ip_address, e, iterat)  # Store synchronously
+    if ip_address != '':
+        if request.session['action'] == 'account_recovery':
+            iterat = 'AR'  # AR stands for Account Recovery keystrokes
+            e = eval(request.path.split('2/')[-1])
+            saveTempData2(ip_address, e, iterat)  # Store Asynchronously
+        else:
+            iterat = 'UL'  # UL stands for User Login keystrokes
+            e = eval(request.path.split('2/')[-1])
+            print(e)
+            saveTempData(ip_address, e, iterat)  # Store synchronously
     return HttpResponse(request)
 
 
@@ -631,7 +634,7 @@ def forgotpwd1(request):
         ip_address = getIP(request)
         clear(ip_address)
         clearMouseData(ip_address)
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
         return response
     else:
         all_users_list = Users.objects.all()
@@ -668,7 +671,7 @@ def forgotpwd2(request):
         ip_address = getIP(request)
         clear(ip_address)
         clearMouseData(ip_address)
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
         return response
 
     j = 0
@@ -700,7 +703,7 @@ def forgotpwd3(request):
         ip_address = getIP(request)
         clear(ip_address)
         clearMouseData(ip_address)
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
         return response
 
     try:
@@ -834,7 +837,8 @@ def forgotpwd3(request):
             # Use all keystroke (granted or denied) that belongs to the true user
             all_keys = Keys.objects.filter(user=attempt_user)
             p1 = sorted([(i.timestamp, i.key_name, i.release) for i in all_keys if i.release == 0 and
-                         (i.widgetName == 'Fname' or i.widgetName == 'Lname') and i.genuine == 1 and i.decision == 'granted'])
+                         (
+                                 i.widgetName == 'Fname' or i.widgetName == 'Lname') and i.genuine == 1 and i.decision == 'granted'])
             p2 = sorted([(i.timestamp, i.key_name, i.release) for i in all_keys if
                          i.release == 0 and (i.widgetName == 'declare') and i.genuine == 1 and i.decision == 'granted'])
             p3 = sorted([(i.timestamp, i.key_name, i.release) for i in all_keys if
@@ -846,7 +850,8 @@ def forgotpwd3(request):
             p6 = sorted([(i.timestamp, i.key_name, i.release) for i in all_keys if
                          i.release == 0 and (i.widgetName == 'phone') and i.genuine == 1 and i.decision == 'granted'])
             p7 = sorted([(i.timestamp, i.key_name, i.release) for i in all_keys if i.release == 0 and
-                         (i.widgetName == 'email' or i.widgetName == 'reEmail') and i.genuine == 1 and i.decision == 'granted'])
+                         (
+                                 i.widgetName == 'email' or i.widgetName == 'reEmail') and i.genuine == 1 and i.decision == 'granted'])
 
             # Get test samples
             samples = Data.objects.filter(ip=ip_address)
@@ -901,7 +906,8 @@ def forgotpwd3(request):
                         status = "Granted (TA)"
                         # Update weekly task left
                         if user_details.AR_weekly_task_left > 0:
-                            Users.objects.filter(memberID=attempt_user).update(AR_weekly_task_left=(user_details.AR_weekly_task_left - 1))
+                            Users.objects.filter(memberID=attempt_user).update(
+                                AR_weekly_task_left=(user_details.AR_weekly_task_left - 1))
                             # Update the recovery attempt
                             AR_attempt = user_details.AR_attempt + 1
                             Users.objects.filter(memberID=attempt_user).update(AR_attempt=AR_attempt)
@@ -928,11 +934,12 @@ def forgotpwd3(request):
                         addKeystrokesToProfile('AR', ip_address, attempt_user, 0, 'granted', lastAttempt)
                         moveMouseData('AR', ip_address, attempt_user, 0, 'granted', lastAttempt)
                         context = {'message': 'Welcome back, ' + attempt_user + '. ' +
-                                       'You have passed our credential checking.', 'owner': owner}
+                                              'You have passed our credential checking.', 'owner': owner}
 
                     # Save successful attempt
                     attempt = RecoveryAttempt(ip=ip_address, claimed_id=attempt_user, timestamp=int(time.time()),
-                                              score='%.3f' % (distance_score), threshold=recoveryThreshold, status=status)
+                                              score='%.3f' % (distance_score), threshold=recoveryThreshold,
+                                              status=status)
                     attempt.save()
 
                     # Clear Temp_Keys before storing new password keystokes
@@ -1024,7 +1031,7 @@ def forgotpwd3(request):
                 Users.objects.filter(memberID=attempt_user).update(
                     expire_at=int(time.time() + 600))
                 sendSMS("The first half of your account recovery verification code is : " + str(otp1) +
-                    ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA", phone)
+                        ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA", phone)
                 context_mail = {'fn': user_details.first_name, 'otp2': otp2, 'otp': True}
                 SendCustomEmail([user_details.mail], context_mail, "Verification Required")
                 context = {'enterOTP': True, 'split': True}
@@ -1042,7 +1049,7 @@ def forgotpwd3(request):
         print('Value Error: Something went wrong.')
         clear(ip_address)
         clearMouseData(ip_address)
-        response = redirect('http://127.0.0.1:8000/soteria/forgotpwd1')
+        response = redirect('/soteria/forgotpwd1')
         return response
 
 
@@ -1052,7 +1059,7 @@ def forgotpwd4(request):
         ip_address = getIP(request)
         clear(ip_address)
         clearMouseData(ip_address)
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
         return response
 
     otp = request.POST.get('otp')
@@ -1104,7 +1111,7 @@ def resendEmail(request):
     code = pwd[(len(pwd) // 2) - 7: (len(pwd) // 2) + 7]
     title = 'Password Reset Link'
     ip_address = request.session.get('ip_address', '')
-    link = 'http://127.0.0.1:8000/soteria/forgotpwd4?code=' + code + '&ip=' + ip_address + '&id=' + attempt_user + '&pwd_status=' + \
+    link = '/soteria/forgotpwd4?code=' + code + '&ip=' + ip_address + '&id=' + attempt_user + '&pwd_status=' + \
            request.session['pwd_status']
     context_mail = {'fn': user_details.first_name, 'link': link, 'pwd_reset': True}
 
@@ -1125,7 +1132,7 @@ def email_resend(request):
     if '#' in code:
         code = code.split("#", 1)[0]
     title = 'Email Verification'
-    link = 'http://127.0.0.1:8000/soteria/email_verification?code=' + str(code) + '&id=' + mID
+    link = '/soteria/email_verification?code=' + str(code) + '&id=' + mID
     context = {'fn': fn, 'mID': mID, 'link': link, 'signup': True}
     SendCustomEmail([mail], context, title)
 
@@ -1155,7 +1162,7 @@ def success2(request):
         ip_address = getIP(request)
         clear(ip_address)
         clearMouseData(ip_address)
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
         return response
     attempt_user = request.session.get('memberID', '')
     user_details = Users.objects.get(memberID=attempt_user)
@@ -1171,7 +1178,8 @@ def success2(request):
         lastAttempt = (Keys.objects.filter(user=attempt_user, iteration__startswith='AR').last()).iteration
         lastAttempt = int(lastAttempt.replace('AR', ''))
 
-        if fuzz.ratio(user_details.first_name.lower() + ' ' + user_details.last_name.lower(), request.session['sessionUserFullname'].lower()) > 80:
+        if fuzz.ratio(user_details.first_name.lower() + ' ' + user_details.last_name.lower(),
+                      request.session['sessionUserFullname'].lower()) > 80:
             # True User
             # Add new password keystrokes
             addKeystrokesToProfile('AR', request.session['ip_address'], attempt_user, 1, 'granted', lastAttempt)
@@ -1185,10 +1193,10 @@ def success2(request):
         Users.objects.filter(memberID=request.session['memberID']).update(pwd_status=pwd_status)
 
         if pwd_status == '2' or pwd_status == '1':
-            homeLink = "http://127.0.0.1:8000"
+            homeLink = "/"
             context = {'status': homeLink, 'message': 'Your password has been updated.'}
         else:
-            homeLink = "http://127.0.0.1:8000"
+            homeLink = "/"
             context = {'status': homeLink}
 
         return render(request, 'success.html', context)
@@ -1370,7 +1378,7 @@ def signup2(request):
             if '#' in code:
                 code = code.split("#", 1)[0]
             title = 'Email Verification'
-            link = 'http://127.0.0.1:8000/soteria/email_verification?code=' + str(code) + '&id=' + mID + '&ip=' + ip_address
+            link = '/soteria/email_verification?code=' + str(code) + '&id=' + mID + '&ip=' + ip_address
             context = {'fn': fn, 'mID': mID, 'link': link, 'signup': True}
             SendCustomEmail([mail], context, title)
 
@@ -1399,9 +1407,11 @@ def email_verification(request):
             # Link is genuine and has not been previously used
             print(request.session['memberID'])
             createNewUser(request.session['memberID'])
-            addKeystrokesToProfile('AR', ip_address, request.session['memberID'], 1, 'granted', 1)  # First keystrokes data in profile
+            addKeystrokesToProfile('AR', ip_address, request.session['memberID'], 1, 'granted',
+                                   1)  # First keystrokes data in profile
             moveMouseData('AR', ip_address, request.session['memberID'], 1, 'granted', 1)  # First mouse data in profile
-            context = { 'user_name': {'fn': user_details.first_name, 'ln': user_details.last_name}, 'enrol_count': REPEAT1}
+            context = {'user_name': {'fn': user_details.first_name, 'ln': user_details.last_name},
+                       'enrol_count': REPEAT1}
         else:
             context = {'message': 'This link has either been used or does not exist.'}
     else:
@@ -1412,16 +1422,16 @@ def email_verification(request):
 def landingpage(request):
     try:
         if not request.session['is_loggedin']:
-            response = redirect('http://127.0.0.1:8000/')
+            response = redirect('/')
         else:
             fullname = request.session['loggedin_user'].title()
             context = {'userName': fullname}
             url = 'landing_page.html'
             return render(request, url, context)
     except MultiValueDictKeyError:
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
     except KeyError:
-        response = redirect('http://127.0.0.1:8000/')
+        response = redirect('/')
     request.session['is_loggedin'] = False
     return response
 
@@ -1431,7 +1441,7 @@ def SendCustomEmail(toEmail, context, title):
     text_template = get_template('email_template.txt')
     html_alternative = html_template.render(context)
     text_alternative = text_template.render(context)
-    msg = EmailMultiAlternatives(title, text_alternative, 'wahabaa@clarkson.edu', toEmail)
+    msg = EmailMultiAlternatives(title, text_alternative, settings.DEFAULT_FROM_EMAIL, toEmail)
     msg.attach_alternative(html_alternative, "text/html")
     msg.send(fail_silently=False)
     print('Mail sent')
@@ -1448,8 +1458,8 @@ def update_session(request):
 
 def participant_list(request):
     ip = getIP(request)
-    if str(ip) not in ['67.249.20.200']: # The only IP that can access this page
-        response = redirect('http://127.0.0.1:8000/')
+    if str(ip) not in ['67.249.20.200']:  # The only IP that can access this page
+        response = redirect('/')
         return response
     userlist = Users.objects.all()
     for eachUser in userlist:
@@ -1459,17 +1469,20 @@ def participant_list(request):
         # update last visited and reset weekly tasks
         if eachUser.login_attempt < 100:
             if abs((d2 - d1).days) >= 1:
-                if (100 - eachUser.login_attempt) < weeklyLogin: # Total Login task left is less than weekly tasks of 20
-                    Users.objects.filter(memberID=eachUser.memberID).update(login_weekly_task_left=(100 - eachUser.login_attempt))
+                if (
+                        100 - eachUser.login_attempt) < weeklyLogin:  # Total Login task left is less than weekly tasks of 20
+                    Users.objects.filter(memberID=eachUser.memberID).update(
+                        login_weekly_task_left=(100 - eachUser.login_attempt))
                 else:
                     Users.objects.filter(memberID=eachUser.memberID).update(login_weekly_task_left=weeklyLogin)
         else:
             if eachUser.login_weekly_task_left != 0:
-                Users.objects.filter(memberID=eachUser.memberID).update(login_weekly_task_left=0) # Force it to 0
+                Users.objects.filter(memberID=eachUser.memberID).update(login_weekly_task_left=0)  # Force it to 0
         if eachUser.AR_attempt < 20:
             if abs((d2 - d1).days) >= 1:
                 if (20 - eachUser.AR_attempt) < weeklyAR:  # Total AR task left is less than weekly tasks of 5
-                    Users.objects.filter(memberID=eachUser.memberID).update(AR_weekly_task_left=(20 - eachUser.AR_attempt))
+                    Users.objects.filter(memberID=eachUser.memberID).update(
+                        AR_weekly_task_left=(20 - eachUser.AR_attempt))
                 else:
                     Users.objects.filter(memberID=eachUser.memberID).update(AR_weekly_task_left=weeklyAR)
         else:
@@ -1482,17 +1495,17 @@ def participant_list(request):
 @csrf_exempt
 def sendUserReminder(request):
     ip = getIP(request)
-    if str(ip) not in ['67.249.20.200']: # The only IP that can access this page
-        response = redirect('http://127.0.0.1:8000/')
+    if str(ip) not in ['67.249.20.200']:  # The only IP that can access this page
+        response = redirect('/')
         return response
     global context_mail
     userlist = Users.objects.all()
     for eachUser in userlist:
-        link = 'http://127.0.0.1:8000'
+        link = '/'
         d1 = datetime.datetime.strptime(date.today().strftime("%m/%d/%Y"), "%m/%d/%Y")  # Current time
         d2 = datetime.datetime.strptime(eachUser.last_visited, "%m/%d/%Y")  # Last visited
         if eachUser.login_attempt < 100 or eachUser.AR_attempt < 20:
-            if str(eachUser.memberID) in ['6239364', '0812678']: # User want to unsubscribe
+            if str(eachUser.memberID) in ['6239364', '0812678']:  # User want to unsubscribe
                 continue
             if eachUser.login_weekly_task_left > 0 or eachUser.AR_weekly_task_left > 0:
                 context_mail = {'fn': eachUser.first_name, 'link': link, 'login_attempts': eachUser.login_attempt,
@@ -1511,21 +1524,24 @@ def sendUserReminder(request):
             # User have completed genuine login and recovery
             if eachUser.pwd_status == 0:
                 # Send a completion email ONLY ONCE
-                Users.objects.filter(memberID=eachUser.memberID).update(pwd_status=2) # NOTE: 2 means genuine tasks completion email has been sent
-                context_mail = {'fn': eachUser.first_name, 'ln': eachUser.last_name, 'link': link, 'login_attempts': eachUser.login_attempt,
+                Users.objects.filter(memberID=eachUser.memberID).update(
+                    pwd_status=2)  # NOTE: 2 means genuine tasks completion email has been sent
+                context_mail = {'fn': eachUser.first_name, 'ln': eachUser.last_name, 'link': link,
+                                'login_attempts': eachUser.login_attempt,
                                 'AR_attempts': eachUser.AR_attempt, 'login_left': eachUser.login_weekly_task_left,
                                 'AR_left': eachUser.AR_weekly_task_left, 'genuine_tasks_completed': True}
 
                 SendCustomEmail([eachUser.mail], context_mail, 'Congratulations, Genuine Tasks Completed')
-        else: continue
+        else:
+            continue
     return HttpResponse(request)
 
 
 @csrf_exempt
 def sendAttackReminder(request):
     ip = getIP(request)
-    if str(ip) not in ['67.249.20.200']: # The only IP that can access this page
-        response = redirect('http://127.0.0.1:8000/')
+    if str(ip) not in ['67.249.20.200']:  # The only IP that can access this page
+        response = redirect('/')
         return response
     global title, message
     attackList = Attacks.objects.exclude(login_attempts=total,
@@ -1549,7 +1565,7 @@ def sendAttackReminder(request):
         else:
             continue
 
-        link = 'http://127.0.0.1:8000/'
+        link = '/'
         context_mail = {'fn': impostorInfo.first_name, 'mID': realInfo.memberID, 'fn2': realInfo.first_name,
                         'ln2': realInfo.last_name, 'dob': realInfo.dob,
                         'address': realInfo.address, 'city': realInfo.city, 'state': realInfo.state,
@@ -1565,15 +1581,17 @@ def sendAttackReminder(request):
 
 def attack_list(request):
     ip = getIP(request)
-    if str(ip) not in ['67.249.20.200']: # The only IP that can access this page
-        response = redirect('http://127.0.0.1:8000/')
+    if str(ip) not in ['67.249.20.200']:  # The only IP that can access this page
+        response = redirect('/')
         return response
-    link = 'http://127.0.0.1:8000'
+    link = '/'
     userlist = Users.objects.all()  # Get all users
     for eachUser in userlist:  # Loop through users
-        if eachUser.login_attempt >=100 and eachUser.AR_attempt >=20: # User must have completed login and AR tasks
-            if Attacks.objects.filter(attacker=eachUser.memberID).exists():  # Check if user has ever been assigned an impostor
-                if Attacks.objects.filter(attacker=eachUser.memberID).count() < 5:  # Check is user has completed all impostor attacks on 5 other users
+        if eachUser.login_attempt >= 100 and eachUser.AR_attempt >= 20:  # User must have completed login and AR tasks
+            if Attacks.objects.filter(
+                    attacker=eachUser.memberID).exists():  # Check if user has ever been assigned an impostor
+                if Attacks.objects.filter(
+                        attacker=eachUser.memberID).count() < 5:  # Check is user has completed all impostor attacks on 5 other users
                     attackProfile = Attacks.objects.filter(attacker=eachUser.memberID).last()
                     if attackProfile.login_attempts >= total and attackProfile.AR_attempts >= total:  # Check if user has completed impostor attack on the current profile
                         # Ensure random user is not same as impostor or has not been previously attacked by same user
@@ -1581,8 +1599,9 @@ def attack_list(request):
                         while recursiveCount < 20:  # Users must have sufficient profile
                             recursiveCount += 1
                             random_user = getRandomUser()
-                            if random_user.memberID == eachUser.memberID or Attacks.objects.filter(attacker=eachUser.memberID,
-                               attacks=random_user.memberID).exists() or random_user.login_attempt < 100 or random_user.AR_attempt < 20\
+                            if random_user.memberID == eachUser.memberID or Attacks.objects.filter(
+                                    attacker=eachUser.memberID,
+                                    attacks=random_user.memberID).exists() or random_user.login_attempt < 100 or random_user.AR_attempt < 20 \
                                     or random_user.login_template < 4 or random_user.AR_template < 4:
                                 continue
                             else:
@@ -1595,9 +1614,11 @@ def attack_list(request):
                         # Send a completion email ONLY ONCE
                         particular_user = Users.objects.get(memberID=eachUser.memberID)
                         if particular_user.pwd_status == 2:
-                            Users.objects.filter(memberID=eachUser.memberID).update(pwd_status=3)  # NOTE: 3 means impostor tasks completion email has been sent
-                            link = 'http://127.0.0.1:8000/'
-                            context_mail = {'fn': eachUser.first_name, 'ln': eachUser.last_name, 'link': link, 'impostor_tasks_completed': True}
+                            Users.objects.filter(memberID=eachUser.memberID).update(
+                                pwd_status=3)  # NOTE: 3 means impostor tasks completion email has been sent
+                            link = '/'
+                            context_mail = {'fn': eachUser.first_name, 'ln': eachUser.last_name, 'link': link,
+                                            'impostor_tasks_completed': True}
 
                             SendCustomEmail([eachUser.mail], context_mail, 'Congratulations, Impostor Tasks Completed')
 
@@ -1607,7 +1628,7 @@ def attack_list(request):
                 while recursiveCount < 20:  # Users must have sufficient profile
                     random_user = getRandomUser()
                     recursiveCount += 1
-                    if random_user.memberID == eachUser.memberID or random_user.login_attempt < 100 or random_user.AR_attempt < 20\
+                    if random_user.memberID == eachUser.memberID or random_user.login_attempt < 100 or random_user.AR_attempt < 20 \
                             or random_user.login_template < 4 or random_user.AR_template < 4:
                         continue
                     else:

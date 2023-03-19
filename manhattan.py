@@ -1,18 +1,20 @@
-from numpy import std
-import sqlite3
 import os
+
+from numpy import std
+
+
 # import distance_score
-import numpy as np
 
 
 # print std([1,2,3,4])
 
 # Manhattan scaled
 def Dfeat(test, profile):
-    mprof = sum(profile) * 1.0 / len(profile) # find mean
-    stdprof = max(10, std(profile))     # find max in std of profile
+    mprof = sum(profile) * 1.0 / len(profile)  # find mean
+    stdprof = max(10, std(profile))  # find max in std of profile
     # print [abs(i-mprof)*1.0/stdprof for i in test]
-    return sum(abs(i - mprof) * 1.0 / stdprof for i in test), len(test)     # absolute value of the difference btw each test diagraph and profile mean diagraph and divide by std
+    return sum(abs(i - mprof) * 1.0 / stdprof for i in test), len(
+        test)  # absolute value of the difference btw each test diagraph and profile mean diagraph and divide by std
 
 
 def Dfeat2(test, profile):
@@ -24,7 +26,7 @@ def Dfeat2(test, profile):
             c += r[1]
     if c == 0:
         return 10
-    return s * 1.0 / c      # more like finding the mean of all the scores
+    return s * 1.0 / c  # more like finding the mean of all the scores
 
 
 # print Dfeat([2,3],[1,2,3,4])

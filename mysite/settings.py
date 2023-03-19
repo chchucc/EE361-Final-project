@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+import environ
+
+# Initialise environment variables
+env = environ.Env()
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -25,11 +29,10 @@ SECRET_KEY = 'o15z6bih3(vn5l*uuxwahi$62fcavn+m9qw!ya$kf#y6ipqbr#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-SESSION_COOKIE_AGE = 60*60
+SESSION_COOKIE_AGE = 60 * 60
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -74,7 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
-
 # Database
 # # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 #
@@ -86,17 +88,16 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # }
 
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 DATABASES = {
-'default': {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'soteria', # Set DB Name
-    'HOST': 'localhost',
-    'PORT': '3306',
-    'USER': 'root',
-    'PASSWORD': '*****', # Set DB password
-
-    # Server MYSQL Pass: serlclarkson
-}}
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': env('DATABASE_NAME'),  # Set DB Name
+        'HOST': env('DATABASE_HOST'),
+        'PORT': env('DATABASE_PORT'),
+        'USER': 'root',
+        'PASSWORD': env('DATABASE_PASSWORD'),  # Set DB password
+    }}
 
 # Uncomment if using Postresql
 # DATABASES = { 
@@ -142,7 +143,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -156,7 +156,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
@@ -168,12 +167,15 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
 
-
 # Email settings
-DEFAULT_FROM_EMAIL = 'tester@gmail.com'
-SERVER_EMAIL = 'tester@gmail.com'
+DEFAULT_FROM_EMAIL = env('SENDGRID_EMAIL_ADDRESS')
+SERVER_EMAIL = env('SENDGRID_EMAIL_ADDRESS')
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = '***************************'
+EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY')
+
+TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = env('TWILIO_PHONE_NUMBER')

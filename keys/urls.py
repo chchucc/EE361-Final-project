@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # from __future__ import unicode_literals
 
-from django.apps import AppConfig
-
 from django.urls import re_path
 
 from . import views
@@ -30,13 +28,6 @@ urlpatterns = [
     re_path(r'^attack_list', views.attack_list, name='attack_list'),
     re_path(r'^sendUserReminder', views.sendUserReminder, name='sendUserReminder'),
     re_path(r'^sendAttackReminder', views.sendAttackReminder, name='sendAttackReminder'),
-    # re_path(r'^step1', views.step1, name='step1'),
-    # re_path(r'^step2', views.step2, name='step2'),
-    # re_path(r'^step3', views.step3, name='step3'),
-    # re_path(r'^step4', views.step4, name='step4'),
-    # re_path(r'^login', views.login, name='login'),
-    # re_path(r'^success', views.success, name='success'),
     re_path(r'^landingpage', views.landingpage, name='landingpage'),
     re_path(r'^update_session', views.update_session, name='update_session'),
-    # re_path(r'^increment', views.increment, name='increment'),
 ]
