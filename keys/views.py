@@ -1106,13 +1106,18 @@ def forgotpwd4(request):
 
 def resendEmail(request):
     attempt_user = request.session.get('memberID', '')
+
+    if not Users.objects.filter(memberID=attempt_user).exists():
+        return redirect('/')
+
     user_details = Users.objects.get(memberID=attempt_user)
     pwd = str(user_details.password)
     code = pwd[(len(pwd) // 2) - 7: (len(pwd) // 2) + 7]
     title = 'Password Reset Link'
     ip_address = request.session.get('ip_address', '')
-    link = '/soteria/forgotpwd4?code=' + code + '&ip=' + ip_address + '&id=' + attempt_user + '&pwd_status=' + \
-           request.session['pwd_status']
+
+    link = request.build_absolute_uri('/soteria/forgotpwd4?code=' + code + '&ip=' + ip_address + '&id=' + attempt_user + '&pwd_status=' + \
+           request.session['pwd_status'])
     context_mail = {'fn': user_details.first_name, 'link': link, 'pwd_reset': True}
 
     SendCustomEmail([request.session['toEmail']], context_mail, title)
@@ -1123,6 +1128,8 @@ def resendEmail(request):
 
 def email_resend(request):
     mID = request.session.get('memberID', '')
+    if not Temp_User.objects.filter(memberID=mID).exists():
+        return redirect('/')
     newUser = Temp_User.objects.get(memberID=mID)
     pwd = newUser.password
     mail = newUser.mail
@@ -1132,7 +1139,7 @@ def email_resend(request):
     if '#' in code:
         code = code.split("#", 1)[0]
     title = 'Email Verification'
-    link = '/soteria/email_verification?code=' + str(code) + '&id=' + mID
+    link = request.build_absolute_uri('/soteria/email_verification?code=' + str(code) + '&id=' + mID)
     context = {'fn': fn, 'mID': mID, 'link': link, 'signup': True}
     SendCustomEmail([mail], context, title)
 
@@ -1378,7 +1385,7 @@ def signup2(request):
             if '#' in code:
                 code = code.split("#", 1)[0]
             title = 'Email Verification'
-            link = '/soteria/email_verification?code=' + str(code) + '&id=' + mID + '&ip=' + ip_address
+            link = request.build_absolute_uri('/soteria/email_verification?code=' + str(code) + '&id=' + mID + '&ip=' + ip_address)
             context = {'fn': fn, 'mID': mID, 'link': link, 'signup': True}
             SendCustomEmail([mail], context, title)
 
@@ -1501,7 +1508,7 @@ def sendUserReminder(request):
     global context_mail
     userlist = Users.objects.all()
     for eachUser in userlist:
-        link = '/'
+        link = request.build_absolute_uri('/')
         d1 = datetime.datetime.strptime(date.today().strftime("%m/%d/%Y"), "%m/%d/%Y")  # Current time
         d2 = datetime.datetime.strptime(eachUser.last_visited, "%m/%d/%Y")  # Last visited
         if eachUser.login_attempt < 100 or eachUser.AR_attempt < 20:
@@ -1565,7 +1572,7 @@ def sendAttackReminder(request):
         else:
             continue
 
-        link = '/'
+        link = request.build_absolute_uri('/')
         context_mail = {'fn': impostorInfo.first_name, 'mID': realInfo.memberID, 'fn2': realInfo.first_name,
                         'ln2': realInfo.last_name, 'dob': realInfo.dob,
                         'address': realInfo.address, 'city': realInfo.city, 'state': realInfo.state,
@@ -1584,7 +1591,7 @@ def attack_list(request):
     if str(ip) not in ['67.249.20.200']:  # The only IP that can access this page
         response = redirect('/')
         return response
-    link = '/'
+    link = request.build_absolute_uri('/')
     userlist = Users.objects.all()  # Get all users
     for eachUser in userlist:  # Loop through users
         if eachUser.login_attempt >= 100 and eachUser.AR_attempt >= 20:  # User must have completed login and AR tasks
@@ -1616,7 +1623,7 @@ def attack_list(request):
                         if particular_user.pwd_status == 2:
                             Users.objects.filter(memberID=eachUser.memberID).update(
                                 pwd_status=3)  # NOTE: 3 means impostor tasks completion email has been sent
-                            link = '/'
+                            link = request.build_absolute_uri('/')
                             context_mail = {'fn': eachUser.first_name, 'ln': eachUser.last_name, 'link': link,
                                             'impostor_tasks_completed': True}
 
