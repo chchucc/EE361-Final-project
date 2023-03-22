@@ -409,7 +409,7 @@ def home(request):
                 print('OTP is valid!')
                 request.session['is_loggedin'] = True
                 request.session['loggedin_user'] = user.first_name + ' ' + user.last_name
-                request.session['loggedin_username'] = username
+                request.session['loggedin_username'] = user.username
                 print("Building Template")
                 # Save attempt
                 attempt = LoginAttempt(ip=ip_address, claimed_id=attempt_user, timestamp=int(time.time()),
