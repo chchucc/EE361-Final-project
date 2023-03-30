@@ -23,7 +23,6 @@ urlpatterns = [
     re_path(r'^email_resend', views.email_resend, name='email_resend'),
     re_path(r'^email_verification', views.email_verification, name='email_verification'),
     re_path(r'^success2', views.success2, name='success2'),
-    re_path(r'^informed_consent', views.informedconsent, name='informedconsent'),
     re_path(r'^participant_list', views.participant_list, name='participant_list'),
     re_path(r'^attack_list', views.attack_list, name='attack_list'),
     re_path(r'^sendUserReminder', views.sendUserReminder, name='sendUserReminder'),

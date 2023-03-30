@@ -622,10 +622,6 @@ def saveTempData2(ip_address, e, iterat):
     b.save()
 
 
-def informedconsent(request):
-    return render(request, "informed_consent.html", {})
-
-
 def forgotpwd1(request):
     recovWeeklyTaskLeft = -1  # Default
     request.session['action'] = 'account_recovery'
@@ -1326,9 +1322,6 @@ def memberID(request):
 
 
 def signup1(request):
-    # Send signed Informed Consent Form to user via mail
-    signatureName = request.POST.get('fullname')
-    print(signatureName)
     request.session['action'] = 'account_recovery'
     return render(request, "signup1.html", {})
 
