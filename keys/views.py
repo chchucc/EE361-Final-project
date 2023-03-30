@@ -1382,10 +1382,6 @@ def signup2(request):
             context = {'fn': fn, 'mID': mID, 'link': link, 'signup': True}
             SendCustomEmail([mail], context, title)
 
-            # Send proof of signed Informed Consent Form
-            context_mail = {'fn': fn, 'ln': ln, 'mID': mID, 'link': link, 'informed_consent': True}
-            SendCustomEmail([mail], context_mail, 'Proof of Consent')
-
             request.session['memberID'] = mID
             for i in request.POST:
                 request.session[i] = request.POST[i]
