@@ -4,6 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="8562d1bd-22e0-4640-ba90-460e9513827a" name="Changes" comment="">
       <change afterPath="$PROJECT_DIR$/keys/templates/profile.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keys/templates/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/keys/templates/home.html" afterDir="false" />
@@ -11,6 +12,9 @@
       <change beforePath="$PROJECT_DIR$/keys/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/keys/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keys/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/keys/views.py" afterDir="false" />
     </list>
+=======
+    <list default="true" id="38ee63fd-1c08-4d76-ad08-1398dc0fb26e" name="Changes" comment="" />
+>>>>>>> 6b448fa3ae8e7ffaa100e89b837f7c1806600f55
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -22,11 +26,16 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+<<<<<<< HEAD
   <component name="ProjectId" id="2NyhJwBtcIDe6y3tIRIgqNnb0rR" />
+=======
+  <component name="ProjectId" id="2O6lyONjFfMNnwKhNwYoYQLi3Ni" />
+>>>>>>> 6b448fa3ae8e7ffaa100e89b837f7c1806600f55
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
+<<<<<<< HEAD
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
@@ -76,6 +85,31 @@
       <workItem from="1682358158422" duration="926000" />
       <workItem from="1682380036479" duration="3027000" />
       <workItem from="1682463315979" duration="1222000" />
+=======
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "C:/Users/Judy/soteria",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="38ee63fd-1c08-4d76-ad08-1398dc0fb26e" name="Changes" comment="" />
+      <created>1680889166844</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1680889166844</updated>
+      <workItem from="1680889172370" duration="3004000" />
+>>>>>>> 6b448fa3ae8e7ffaa100e89b837f7c1806600f55
     </task>
     <servers />
   </component>
