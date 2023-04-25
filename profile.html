@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% load static %}
+
+<!--<script type="text/javascript">-->
+<!--	onload=function(){-->
+<!--	var e=document.getElementById("refreshed");-->
+<!--	if(e.value=="no")e.value="yes";-->
+<!--	else{e.value="no";location.reload();}-->
+<!--	}-->
+<!--</script>-->
+
+<head>
+  <!--  <A HREF="javascript:history.go(0)">next page</A>-->
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+  <meta content="" name="description">
+  <meta content="" name="author">
+
+  <title>Soteria</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!--  <link href="{% static 'keys/css/style.css' %}" rel="stylesheet">-->
+
+  <!-- Custom fonts for this template -->
+  <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/simple-line-icons/css/simple-line-icons.css' %}" rel="stylesheet" type="text/css">
+  <!--  <link href="{% static 'https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic' %}" rel="stylesheet" type="text/css">-->
+
+  <!-- Custom styles for this template -->
+  <link href="{% static 'css/landing-page.min.css' %}" rel="stylesheet">
+
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-light bg-light static-top">
+  <div class="container">
+    <a class="navbar-brand" href="">Soteria</a>
+    {% if userName %}
+    <a class="navbar-brand" href="#">{{userName}}</a>
+    {% endif %}
+    <div>
+      <a class="btn btn-primary" href="/">Profile</a>
+      <a class="btn btn-primary" href="/">Sign out</a>
+    </div>
+    <div style="display:none;">
+      <button class="btn btn-primary" data-target="#giftCard" data-toggle="modal" id="loadmodal"
+              type="button"></button>
+    </div>
+
+    {% if giftcard %}
+    <script>
+        window.onload = function () {
+            document.getElementById('loadmodal').click();
+        }
+    </script>
+    {% endif %}
+
+    <!--      {% if messages %}-->
+    <!--          {% for msg in messages %}-->
+    <!--            {% if msg.message == "2" %}-->
+    <!--              <script>-->
+    <!--              var probValue = Math.floor(Math.random() * 4);-->
+    <!--              if (probValue == 3){-->
+    <!--                window.onload = function(){-->
+    <!--                document.getElementById('loadmodal').click();-->
+    <!--                }-->
+    <!--              }-->
+    <!--              </script>-->
+    <!--            {% else %}-->
+    <!--              {% if msg.message == '1' %}-->
+    <!--                <script>-->
+    <!--&lt;!&ndash;                TRUE OWNER&ndash;&gt;-->
+    <!--                var probValue = Math.floor(Math.random() * 4);-->
+    <!--                if (probValue == 0){-->
+    <!--                  window.onload = function(){-->
+    <!--                  document.getElementById('loadmodal').click();-->
+    <!--                  }-->
+    <!--                }-->
+    <!--                </script>-->
+    <!--              {% else %}-->
+    <!--&lt;!&ndash;                TRUE OWNER&ndash;&gt;-->
+    <!--                {% if msg.message == 'Genuine' %}-->
+    <!--                  <script>-->
+    <!--                  var probValue = Math.floor(Math.random() * 4);-->
+    <!--                  if (probValue == 0){-->
+    <!--                    window.onload = function(){-->
+    <!--                    document.getElementById('loadmodal').click();-->
+    <!--                    }-->
+    <!--                  }-->
+    <!--                  </script>-->
+    <!--                {% else %}-->
+    <!--                  <script>-->
+    <!--                  var probValue = Math.floor(Math.random() * 4);-->
+    <!--                  if (probValue == 0){-->
+    <!--                    window.onload = function(){-->
+    <!--                    document.getElementById('loadmodal').click();-->
+    <!--                    }-->
+    <!--                  }-->
+    <!--                  </script>-->
+    <!--                {% endif %}-->
+    <!--              {% endif %}-->
+    <!--            {% endif %}-->
+    <!--          {% endfor %}-->
+    <!--        {% endif %}-->
+
+  </div>
+</nav>
+
+<!-- Masthead -->
+<!-- Icons Grid -->
+<!-- Image Showcases -->
+<!-- Testimonials -->
+<!-- Call to Action -->
+<section class="text-center">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-9 mx-auto">
+             <div class="col-xl-9 mx-auto">
+        <h1 class="mb-5">User Profile</h1>
+      </div>
+            <table border="4" align="center" width="60%" bgcolor="white" cellspacing="5" cellpadding="6">
+            <tr>
+                <td bgcolor="#d3d3d3" align="left">Member ID:</td>
+                <td bgcolor="#d3d3d3" align="center">{{ user.memberID }}</td>
+            </tr>
+            <tr>
+                <td align="left">Username:</td>
+                <td align="center">{{ user.username }}</td>
+            </tr>
+            <tr>
+                <td bgcolor="#d3d3d3" align="left">First Name:</td>
+                <td bgcolor="#d3d3d3" align="center">{{ user.first_name }}</td>
+            </tr>
+            <tr>
+                <td align="left">Last Name:</td>
+                <td align="center">{{ user.last_name }} </td>
+            </tr>
+            <tr>
+                <td bgcolor="#d3d3d3" align="left">Email Address:</td>
+                <td bgcolor="#d3d3d3" align="center">{{ user.mail }}</td>
+            </tr>
+            <tr>
+                <td align="left">Phone Number:</td>
+                <td align="center">{{ user.phone }}</td>
+            </tr>
+            <tr>
+                <td bgcolor="#d3d3d3" align="left">Date of Birth:</td>
+                <td align="center" bgcolor="#d3d3d3">{{ user.dob }}</td>
+            </tr>
+            <tr>
+                <td align="left">Full Address:</td>
+                <td align="center" >{{ user.address }} {{ user.city }}, {{user.state }} {{ user.zipcode }} {{ user.country }}</td>
+            </tr>
+            </table>
+                </center>
+            </div>
+        </div>
+    </div>
+</section>
+      <!--        <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">-->
+      <!--          <form>-->
+      <!--            <div class="form-row">-->
+      <!--              <div class="col-12 col-md-9 mb-2 mb-md-0">-->
+      <!--                <input type="email" class="form-control form-control-lg" placeholder="Enter your email...">-->
+      <!--              </div>-->
+      <!--              <div class="col-12 col-md-3">-->
+      <!--                -->
+      <!--              </div>-->
+      <!--            </div>-->
+      <!--          </form>-->
+      <!--        </div>-->
+
+
+<!-- Footer -->
+<footer class="footer bg-light">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-6 h-100 text-center text-lg-left my-auto">
+        <ul class="list-inline mb-2">
+          <li class="list-inline-item">
+            <a href="">About</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+            <a href="">Contact</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+            <a href="">Terms of Use</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+            <a href="">Privacy Policy</a>
+          </li>
+        </ul>
+        <p class="text-muted small mb-4 mb-lg-0">&copy; Soteria 2020-2022. All Rights Reserved.</p>
+      </div>
+      <div class="col-lg-6 h-100 text-center text-lg-right my-auto">
+        <ul class="list-inline mb-0">
+          <li class="list-inline-item mr-3">
+            <a>
+              <i class="fab fa-facebook fa-2x fa-fw"></i>
+            </a>
+          </li>
+          <li class="list-inline-item mr-3">
+            <!--              <a href="">-->
+            <a>
+              <i class="fab fa-twitter-square fa-2x fa-fw"></i>
+            </a>
+          </li>
+          <li class="list-inline-item">
+            <a>
+              <i class="fab fa-instagram fa-2x fa-fw"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- Modal -->
+<!-- Bootstrap core JavaScript -->
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+</body>
+
+</html>
