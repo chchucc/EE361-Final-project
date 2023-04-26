@@ -221,12 +221,12 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                     Users.objects.filter(memberID=attempt_user).update(otp=otp)
                     # Set expiration
                     Users.objects.filter(memberID=attempt_user).update(expire_at=int(time.time() + 600))
-                    sendSMS("The first half of your login verification code is : " + str(
-                        otp1) + ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA",
+                    sendSMS("Your login verification code is : " + str(
+                        otp1) + str(otp2) + ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA",
                             phone)
-                    context_mail = {'fn': user.first_name, 'otp2': otp2, 'otp': True}
-                    SendCustomEmail([email], context_mail, "Verification Required")
-                    context = {'enterOTP': True, 'split': True}
+                    #context_mail = {'fn': user.first_name, 'otp2': otp2, 'otp': True}
+                    #SendCustomEmail([email], context_mail, "Verification Required")
+                    context = {'enterOTP': True, 'split' : True}
                     url = 'home.html'
                     return render(request, url, context)
             else:
@@ -267,12 +267,12 @@ def useKeystrokesDynamics(request, ip_address, username, pwd, phone, email, isTr
                 Users.objects.filter(memberID=attempt_user).update(otp=otp)
                 # Set expiration
                 Users.objects.filter(memberID=attempt_user).update(expire_at=int(time.time() + 600))
-                sendSMS("The first half of your login verification code is : " + str(
-                    otp1) + ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA",
+                sendSMS("Your login verification code is : " + str(
+                    otp1) + str(otp2) + ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA",
                         phone)
-                context_mail = {'fn': user.first_name, 'otp2': otp2, 'otp': True}
-                SendCustomEmail([email], context_mail, "Verification Required")
-                context = {'enterOTP': True, 'split': True}
+                #context_mail = {'fn': user.first_name, 'otp2': otp2, 'otp': True}
+                #SendCustomEmail([email], context_mail, "Verification Required")
+                context = {'enterOTP': True, 'split' : True }
                 url = 'home.html'
                 return render(request, url, context)
         else:
@@ -982,11 +982,11 @@ def forgotpwd3(request):
                     # Set expiration
                     Users.objects.filter(memberID=attempt_user).update(expire_at=int(time.time() + 600))
                     sendSMS(
-                        "The first half of your account recovery verification code is : " + str(otp1) +
+                        "Your account recovery verification code is : " + str(otp1) + str(otp2) +
                         ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA", phone)
                     context_mail = {'fn': user_details.first_name, 'otp2': otp2, 'otp': True}
-                    SendCustomEmail([user_details.mail], context_mail, "Verification Required")
-                    context = {'enterOTP': True, 'split': True}
+                    # SendCustomEmail([user_details.mail], context_mail, "Verification Required")
+                    context = {'enterOTP': True, 'split' : True }
                     return render(request, 'forgotpwd3.html', context)
             else:
                 if owner:
@@ -1026,11 +1026,11 @@ def forgotpwd3(request):
                 # Set expiration
                 Users.objects.filter(memberID=attempt_user).update(
                     expire_at=int(time.time() + 600))
-                sendSMS("The first half of your account recovery verification code is : " + str(otp1) +
+                sendSMS("The first half of your account recovery verification code is : " + str(otp1) + str(otp2) +
                         ". It expires in 10 minutes. Please ignore if you did not request for this. SOTERIA", phone)
                 context_mail = {'fn': user_details.first_name, 'otp2': otp2, 'otp': True}
-                SendCustomEmail([user_details.mail], context_mail, "Verification Required")
-                context = {'enterOTP': True, 'split': True}
+                # SendCustomEmail([user_details.mail], context_mail, "Verification Required")
+                context = {'enterOTP': True, 'split':True}
                 return render(request, 'forgotpwd3.html', context)
 
         else:
@@ -1638,3 +1638,22 @@ def attack_list(request):
 def getRandomUser():
     random_user = Users.objects.all()[random.randint(0, Users.objects.count() - 1)]
     return random_user
+def profile(request):
+    try:
+        if not request.session['is_loggedin']:
+            response = redirect('/')
+        else:
+            fullname = request.session['loggedin_user'].title()
+            username = request.session['loggedin_username'].title()
+            user = Users.objects.get(username=username)
+            context = {
+                'userName': fullname,
+                'user': user}
+            url = 'profile.html'
+            return render(request, url, context)
+    except MultiValueDictKeyError:
+        response = redirect('/')
+    except KeyError:
+        response = redirect('/')
+    request.session['is_loggedin'] = False
+    return response

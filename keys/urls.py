@@ -29,4 +29,5 @@ urlpatterns = [
     re_path(r'^sendAttackReminder', views.sendAttackReminder, name='sendAttackReminder'),
     re_path(r'^landingpage', views.landingpage, name='landingpage'),
     re_path(r'^update_session', views.update_session, name='update_session'),
+    re_path(r'^profile',views.profile, name= 'profile'),
 ]
