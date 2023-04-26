@@ -1323,7 +1323,7 @@ def memberID(request):
 
 def signup1(request):
     request.session['action'] = 'account_recovery'
-    return render(request, "signup1.html", {})
+    return render(request, "signup1.html", {"states":states})
 
 
 def signup2(request):
